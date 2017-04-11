@@ -36,11 +36,11 @@ Broid Kit is thinked to make easy the creation of  creative bots that live insid
 > Connect your App to Multiple Messaging Channels with the W3C Open standard.
 
 <br>
-<center>
+<p align="center">
 <a href="https://github.com/broidHQ/integrations">
 <img alt="Broid.ai" src="https://cloud.githubusercontent.com/assets/1795343/24925674/f7b23ee4-1ec6-11e7-9b11-37a978887b63.png">
 </a>
-</center>
+</p>
 <br>
 <br>
 
