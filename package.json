@@ -1,6 +1,6 @@
 {
   "name": "@broid/kit",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "main": "lib/core/index.js",
   "license": "AGPL-3.0+",
   "author": "Broid Team <opensource@broid.ai> (https://broid.ai)",
@@ -52,7 +52,8 @@
     "tslint": "^4.3.1",
     "tslint-eslint-rules": "^4.0.0",
     "typescript": "^2.1.4",
-    "watch": "^1.0.1"
+    "watch": "^1.0.1",
+    "tslint-microsoft-contrib": "^4.0.1"
   },
   "dependencies": {
     "bluebird": "^3.5.0",
@@ -60,8 +61,7 @@
     "broid-utils": "^1.0.9",
     "express": "^4.15.2",
     "ramda": "^0.23.0",
-    "rxjs": "^5.2.0",
-    "tslint-microsoft-contrib": "^4.0.1"
+    "rxjs": "^5.2.0"
   },
   "ava": {
     "files": [

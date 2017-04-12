@@ -5,12 +5,14 @@ import {
 import { Logger } from 'broid-utils';
 
 import * as Promise from 'bluebird';
-import express from 'express';
+import * as express from 'express';
+import * as http from 'http';
 import * as R from 'ramda';
 import { Observable } from 'rxjs/Rx';
 
 import {
   callbackType,
+  IHTTPOptions,
   IListenerArgs,
   IMetaMediaSend,
   IOptions,
@@ -20,8 +22,10 @@ import {
 
 export class Bot {
   public httpEndpoints: string[];
-  public httpServer: any;
+  public httpServer: null | http.Server;
 
+  private express: any;
+  private httpOptions: IHTTPOptions;
   private integrations: any;
   private logLevel: string;
   private logger: Logger;
@@ -34,7 +38,11 @@ export class Bot {
     this.integrations = [];
     this.receiveMiddlewares = [];
     this.sendMiddlewares = [];
+
+    const httpOptions: IHTTPOptions = { host: '0.0.0.0', port: 8080 };
+    this.httpOptions = obj && obj.http || httpOptions;
     this.httpEndpoints = [];
+    this.httpServer = null;
 
     this.logger = new Logger('broidkit', this.logLevel);
   }
@@ -78,11 +86,12 @@ export class Bot {
       patternRegex = pattern as boolean;
     }
 
-    const listener: Observable<IActivityStream> = Observable.merge(...R.map((integration: any) =>
-      integration.listen(), this.integrations))
-        .mergeMap((message: IActivityStream) =>
-          this.testIncoming(message, patternRegex, messageTypesArr)
-          ? this.processIncomingMessage(message) : Observable.empty());
+    const listener: Observable<IActivityStream> = Observable
+      .merge(...R.flatten(R.map((integration: any) =>
+        [integration.connect(), integration.listen()], this.integrations)))
+      .mergeMap((message: IActivityStream) =>
+        this.testIncoming(message, patternRegex, messageTypesArr)
+        ? this.processIncomingMessage(message) : Observable.empty());
 
     return this.processListener(listener, R.prop('callback', args) as callbackType);
   }
@@ -120,7 +129,7 @@ export class Bot {
   public sendText(text: string, message: IActivityStream) {
     return this.processOutcomingMessage(text, message)
       .then((textUpdated) => {
-        const data: ISendParameters = {
+        let data: ISendParameters = {
           '@context': 'https://www.w3.org/ns/activitystreams',
           'generator': {
             id: R.path(['generator', 'id'], message),
@@ -138,6 +147,7 @@ export class Bot {
           'type': 'Create',
         };
 
+        data = this.addMessageContext(data, message);
         return this.send(data);
       });
   }
@@ -173,6 +183,10 @@ export class Bot {
 
   private processListener(listener: Observable<IActivityStream>,
                           callback?: callbackType): Observable<IActivityStream> | boolean {
+
+    // Start the http server
+    this.startHttpServer();
+
     if (callback) {
       listener.subscribe(callback, (error) => callback(null, error));
       return true;
@@ -183,6 +197,12 @@ export class Bot {
   private testIncoming(message: IActivityStream,
                        patternRegex: RegExp | boolean,
                        messageTypesArr: string[]): boolean {
+    const messageContext = R.prop('@context', message);
+    if (!messageContext) {
+      this.logger.debug('Message received should follow Broid schema.', message);
+      return false;
+    }
+
     const content = R.path(['object', 'content'], message);
     const targetType = R.toLower(R.path(['target', 'type'], message) as string);
 
@@ -229,7 +249,7 @@ export class Bot {
                     meta?: IMetaMediaSend): Promise<any> {
     return this.processOutcomingMessage(url, message)
       .then((urlUpdated) => {
-        const data: ISendParameters = {
+        let data: ISendParameters = {
           '@context': 'https://www.w3.org/ns/activitystreams',
           'generator': {
             id: R.path(['generator', 'id'], message),
@@ -249,6 +269,7 @@ export class Bot {
           'type': 'Create',
         };
 
+        data = this.addMessageContext(data, message);
         return this.send(data);
       });
   }
@@ -258,13 +279,13 @@ export class Bot {
 
     const router = integration.getRouter();
     if (router) {
-      if (!this.httpServer) {
-        this.httpServer = express();
+      if (!this.express) {
+        this.express = express();
       }
 
       const httpPath = `/webhook/${integration.serviceName()}`;
       this.httpEndpoints.push(httpPath);
-      this.httpServer.use(httpPath, router);
+      this.express.use(httpPath, router);
     }
 
     return;
@@ -279,5 +300,25 @@ export class Bot {
   private processOutcomingMessage(messageText: string, message: IActivityStream): Promise<any> {
     return Promise.reduce(this.sendMiddlewares, (text: any, fn: middlewareSendType) =>
                           fn(this, text, message), messageText);
+  }
+
+  private startHttpServer(): void {
+    if (this.express && !this.httpServer) {
+      this.httpServer = this.express.listen(this.httpOptions.port, this.httpOptions.host,
+        () => {
+          this.logger
+            .info(`Server listening on port ${this.httpOptions.host}:${this.httpOptions.port}...`);
+        });
+    }
+  }
+
+  private addMessageContext(data: ISendParameters, message: IActivityStream): ISendParameters {
+    const context = R.path(['object', 'context'], message);
+
+    if (context) {
+      data.object = R.assoc('context', context, data.object);
+    }
+
+    return data;
   }
 }

@@ -55,7 +55,13 @@ const BroidDiscord = require("broid-discord");
 const BroidMessenger = require("broid-messenger");
 const BroidSlack = require("broid-slack");
 
-const bot = new Bot();
+const bot = new Bot({
+  logLevel: "info",
+  http: {
+    host: "0.0.0.0",
+    port: 8080,
+  }
+});
 
 bot.use(new Broid-Slack(<...options>));
 bot.use(new Broid-Discord(<...options>));
@@ -72,6 +78,13 @@ bot.use(new Broid-Messenger(<...options>));
   ```
 
 # Documentation
+
+## WebHooks
+
+Broid Kit provide an http server and create default webhook route when the integration need.
+By default, the webhook path follow the naming: `webhook/<integration>`, integration is the name provide by the `getServiceName` method.
+
+In case of `@broid/skype` the webhook route will be `/webhook/skype`.
 
 ## Receiving all messages
 
