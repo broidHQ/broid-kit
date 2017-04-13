@@ -49,10 +49,10 @@ Broid Kit aims to ease the creation of bots communicating through messaging plat
 
 ```javascript
 
-const Bot = require("broid-kit");
-const BroidDiscord = require("broid-discord");
-const BroidMessenger = require("broid-messenger");
-const BroidSlack = require("broid-slack");
+const Bot = require("@broid/kit");
+const BroidDiscord = require("@broid/discord");
+const BroidMessenger = require("@broid/messenger");
+const BroidSlack = require("@broid/slack");
 
 const bot = new Bot({
   logLevel: "info",
