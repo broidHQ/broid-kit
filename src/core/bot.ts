@@ -1,8 +1,8 @@
 import {
   IActivityStream,
   ISendParameters,
-} from 'broid-schemas';
-import { Logger } from 'broid-utils';
+} from '@broid/schemas';
+import { Logger } from '@broid/utils';
 
 import * as Promise from 'bluebird';
 import * as express from 'express';
