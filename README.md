@@ -31,9 +31,9 @@
 
 # Broid Kit
 
-Broid Kit is thinked to make easy the creation of  creative bots that live inside messaging platforms. It is powered by [Broid Integrations](https://github.com/broidHQ/integrations/edit/master/README.md) which allow you to use the hight number of messanging plateforms thant any others framework.
+Broid Kit aims to ease the creation of bots communicating through messaging platforms.Broid Kit is powered by [Broid Integrations](https://github.com/broidHQ/integrations/edit/master/README.md) which allows you to leverage the largest collection of messaging channels integrated in a given framework.
 
-> Connect your App to Multiple Messaging Channels with the W3C Open standard.
+> Connect your App to Multiple Messaging Channels with the W3C Open standards.
 
 <br>
 <p align="center">
