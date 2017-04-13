@@ -51,14 +51,14 @@
     "sinon": "^1.17.7",
     "tslint": "^4.3.1",
     "tslint-eslint-rules": "^4.0.0",
-    "typescript": "^2.1.4",
+    "typescript": "~2.2.2",
     "watch": "^1.0.1",
     "tslint-microsoft-contrib": "^4.0.1"
   },
   "dependencies": {
+    "@broid/schemas": "^1.0.0",
+    "@broid/utils": "^1.1.0",
     "bluebird": "^3.5.0",
-    "broid-schemas": "^1.1.5",
-    "broid-utils": "^1.0.9",
     "express": "^4.15.2",
     "ramda": "^0.23.0",
     "rxjs": "^5.2.0"

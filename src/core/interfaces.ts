@@ -1,4 +1,4 @@
-import { IActivityStream } from 'broid-schemas';
+import { IActivityStream } from '@broid/schemas';
 
 export type callbackType = (message: any, error?: any) => any;
 export type middlewareReceiveType = (bot: any, message: any) => Promise<any>;
