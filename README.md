@@ -24,7 +24,6 @@
 
 [![npm][npm]][npm-url]
 [![node][node]][node-url]
-[![tests][tests]][tests-url]
 [![bithound][bithound]][bithound-url]
 [![bithoundscore][bithoundscore]][bithoundscore-url]
 [![nsp-checked][nsp-checked]][nsp-checked-url]
