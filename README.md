@@ -157,7 +157,7 @@ Example of Middleware preprocessing
 class FakeMiddleware {
   constructor() {}
 
-  service() {
+  serviceName() {
     return "FakeMiddleware";
   }
 
