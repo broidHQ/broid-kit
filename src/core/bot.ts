@@ -5,6 +5,7 @@ import {
 import { Logger } from '@broid/utils';
 
 import * as Promise from 'bluebird';
+import * as bodyParser from 'body-parser';
 import * as express from 'express';
 import * as http from 'http';
 import * as R from 'ramda';
@@ -16,9 +17,14 @@ import {
   IListenerArgs,
   IMetaMediaSend,
   IOptions,
-  middlewareReceiveType,
-  middlewareSendType,
+  middlewareIncomingType,
+  middlewareOutgoingType,
 } from './interfaces';
+
+const isObservable = (obs:any): boolean => obs && typeof obs.subscribe === 'function';
+const isPromise = (obj:any): boolean =>
+  obj && (typeof obj=='object')
+      && ('tap' in obj) && ('then' in obj) && (typeof obj.then == 'function');
 
 export class Bot {
   public httpEndpoints: string[];
@@ -29,15 +35,15 @@ export class Bot {
   private integrations: any;
   private logLevel: string;
   private logger: Logger;
-  private sendMiddlewares: any;
-  private receiveMiddlewares: any;
+  private outgoingMiddlewares: any;
+  private incomingMiddlewares: any;
 
   constructor(obj?: IOptions) {
     this.logLevel = obj && obj.logLevel || 'info';
 
     this.integrations = [];
-    this.receiveMiddlewares = [];
-    this.sendMiddlewares = [];
+    this.incomingMiddlewares = [];
+    this.outgoingMiddlewares = [];
 
     const httpOptions: IHTTPOptions = { host: '0.0.0.0', port: 8080 };
     this.httpOptions = obj && obj.http || httpOptions;
@@ -51,22 +57,30 @@ export class Bot {
     return this.httpEndpoints;
   }
 
-  public use(instance: any): void {
+  public use(instance: any, filter?: string | string[]): void {
     // it's an integration
     if (instance.listen) {
       this.logger.info({ method: 'use', message: `Integration: ${instance.serviceName()}` });
       this.addIntegration(instance);
-    } else if (instance.receive || instance.send) { // Middleware
-      if (instance.receive) {
+    } else if (instance.incoming || instance.outgoing) { // Middleware
+      if (instance.incoming) {
         this.logger
-          .info({ method: 'use', message: `Receive middleware: ${instance.serviceName()}` });
-        this.receiveMiddlewares.push(instance.receive);
+          .info({ method: 'use', message: `incoming middleware: ${instance.serviceName()}` });
+        this.incomingMiddlewares.push({
+          name: `${instance.serviceName()}.incoming`,
+          middleware: instance,
+          filter: filter || null,
+        });
       }
 
-      if (instance.send) {
+      if (instance.outgoing) {
         this.logger
-          .info({ method: 'use', message: `Send middleware: ${instance.serviceName()}` });
-        this.sendMiddlewares.push(instance.send);
+          .info({ method: 'use', message: `outgoing middleware: ${instance.serviceName()}` });
+        this.outgoingMiddlewares.push({
+          name: `${instance.serviceName()}.outgoing`,
+          middleware: instance,
+          filter: filter || null,
+        });
       }
     }
     return;
@@ -89,9 +103,10 @@ export class Bot {
     const listener: Observable<IActivityStream> = Observable
       .merge(...R.flatten(R.map((integration: any) =>
         [integration.connect(), integration.listen()], this.integrations)))
-      .mergeMap((message: IActivityStream) =>
-        this.testIncoming(message, patternRegex, messageTypesArr)
-        ? this.processIncomingMessage(message) : Observable.empty());
+      .mergeMap((message: IActivityStream) => this.processIncomingMessage(message))
+      .mergeMap((messageUpdated: any) =>
+        this.testIncoming(messageUpdated.message, patternRegex, messageTypesArr)
+        ? Promise.resolve(messageUpdated) : Observable.empty());
 
     return this.processListener(listener, R.prop('callback', args) as callbackType);
   }
@@ -107,12 +122,14 @@ export class Bot {
     const listener: Observable<IActivityStream> = Observable.merge(...R.map((integration: any) =>
       integration.listen(), this.integrations))
         .mergeMap((message: IActivityStream) => {
+          const messageUpdated: any = this.processIncomingMessage(message);
+
           const matches = R.pipe(R.map((patternRegex: RegExp) =>
-            this.testIncoming(message, patternRegex, messageTypesArr)),
+            this.testIncoming(messageUpdated.message, patternRegex, messageTypesArr)),
             R.reject(R.equals(false)));
 
           if (!R.isEmpty(matches(patternRegexes))) {
-            return this.processIncomingMessage(message);
+            return Promise.resolve(messageUpdated);
           }
 
           return Observable.empty();
@@ -127,8 +144,9 @@ export class Bot {
   }
 
   public sendText(text: string, message: IActivityStream) {
-    return this.processOutcomingMessage(text, message)
-      .then((textUpdated) => {
+    return this.processOutgoingContent(text, message)
+      .then((updated) => {
+        const content: string = updated.content || text;
         let data: ISendParameters = {
           '@context': 'https://www.w3.org/ns/activitystreams',
           'generator': {
@@ -137,7 +155,7 @@ export class Bot {
             type: 'Service',
           },
           'object': {
-            content: textUpdated,
+            content: content,
             type: 'Note',
           },
           'to': {
@@ -158,6 +176,18 @@ export class Bot {
 
   public sendImage(url: string, message: IActivityStream, meta?: IMetaMediaSend) {
     return this.sendMedia(url, 'Image', message, meta);
+  }
+
+  private processOutgoingContent(content: string, message: IActivityStream): Promise<any> {
+    return this.processOutgoingMessage(content, message)
+      .toPromise(Promise)
+      .then((updated) => {
+        const contents = R.reject(R.isNil)(R.map((o: any) => o.content, updated.data));
+        if (!R.isEmpty(contents)) {
+          updated.content = R.join(' ', contents);
+        }
+        return updated;
+      });
   }
 
   private messageTypes2Arr(messageTypes?: string | null): string[] {
@@ -199,7 +229,7 @@ export class Bot {
                        messageTypesArr: string[]): boolean {
     const messageContext = R.prop('@context', message);
     if (!messageContext) {
-      this.logger.debug('Message received should follow Broid schema.', message);
+      this.logger.debug('Message incoming should follow Broid schema.', message);
       return false;
     }
 
@@ -247,7 +277,7 @@ export class Bot {
   private sendMedia(url: string, mediaType: string,
                     message: IActivityStream,
                     meta?: IMetaMediaSend): Promise<any> {
-    return this.processOutcomingMessage(url, message)
+    return this.processOutgoingContent(url, message)
       .then((urlUpdated) => {
         let data: ISendParameters = {
           '@context': 'https://www.w3.org/ns/activitystreams',
@@ -281,6 +311,8 @@ export class Bot {
     if (router) {
       if (!this.express) {
         this.express = express();
+        this.express.use(bodyParser.json());
+        this.express.use(bodyParser.urlencoded({ extended: false }));
       }
 
       const httpPath = `/webhook/${integration.serviceName()}`;
@@ -291,15 +323,114 @@ export class Bot {
     return;
   }
 
-  private processIncomingMessage(message: IActivityStream): Promise<any> {
-    return Promise.reduce(this.receiveMiddlewares, (data: any, fn: middlewareReceiveType) =>
-                          fn(this, data), message)
-                  .then((data) => ({ message: data, raw: message }));
+  /**
+   * I'd like to identify I way reach the same results dynamically, given an array (or sequence) of filters.
+   *
+   * @param input {} A value to be processed by a chain of filters.
+   * @param filters {Array} An array of filters through which to process the input.
+   * @returns {Observable} The output after processing `input` through the chained filters.
+   */
+  private chain(input, filters) {
+    let seq = Observable.from(filters);
+
+    return seq.reduce(
+      (chain: any, filter: any, index: any) => {
+        return chain.concatMap((data: any) => {
+          return filter(data)
+            .map((filterResult: any) => {
+              return R.flatten(R.concat(data, [R.assoc('order', index, filterResult)]));
+            });
+        });
+      },
+      Observable.of(input)
+    )
+    .concatMap((value: any) => value);
   }
 
-  private processOutcomingMessage(messageText: string, message: IActivityStream): Promise<any> {
-    return Promise.reduce(this.sendMiddlewares, (text: any, fn: middlewareSendType) =>
-                          fn(this, text, message), messageText);
+  private processIncomingMessage(message: IActivityStream): Observable<any> {
+    const middlewares = R.map((middleware: any) => {
+      return (acc: any) => {
+        let resultObservable = Observable.empty();
+
+        // Filter by regex if it' set
+        let patternRegexes: boolean[] | RegExp[] = [];
+        if (middleware.filter) {
+          const patterns = R.is(Array, middleware.filter) ? middleware.filter : [middleware.filter];
+          patternRegexes = R.map((pattern: string) => new RegExp(pattern, 'ig'), patterns);
+        }
+
+        const matches = R.pipe(R.map((patternRegex: RegExp | boolean) =>
+          this.testIncoming(message, patternRegex, [])),
+          R.reject(R.equals(false)));
+
+        if (R.isEmpty(patternRegexes) || !R.isEmpty(matches(patternRegexes))) {
+          const fn: middlewareIncomingType = middleware.middleware.incoming;
+          const result: any = fn(this, message, acc);
+
+          if (isObservable(result)) {
+            resultObservable = result;
+          } else if (isPromise(result)) {
+            resultObservable = Observable.fromPromise(result);
+          } else {
+            resultObservable = Observable.of(result);
+          }
+        }
+
+        return resultObservable.map((data) => ({ middleware: middleware.name, data }));
+      };
+    }, this.incomingMiddlewares);
+
+    const intialAcc = [];
+    return this.chain(intialAcc, middlewares)
+      .take(1)
+      .map((data: any) => ({ data, message }));
+  }
+
+  private processOutgoingMessage(content: string, message: IActivityStream): Observable<any> {
+    const middlewares = R.map((middleware: any) => {
+      return (acc: any) => {
+        let resultObservable = Observable.empty();
+
+        // Filter by regex if it' set
+        let patternRegexes: boolean[] | RegExp[] = [];
+        if (middleware.filter) {
+          const patterns = R.is(Array, middleware.filter) ? middleware.filter : [middleware.filter];
+          patternRegexes = R.map((pattern: string) => new RegExp(pattern, 'ig'), patterns);
+        }
+
+        const matches = R.pipe(R.map((patternRegex: RegExp | boolean) =>
+          this.testIncoming(message, patternRegex, [])),
+          R.reject(R.equals(false)));
+
+        if (R.isEmpty(patternRegexes) || !R.isEmpty(matches(patternRegexes))) {
+          const fn: middlewareOutgoingType = middleware.middleware.outgoing;
+          const result: any = fn(this, content, message, acc);
+
+          if (isObservable(result)) {
+            resultObservable = result;
+          } else if (isPromise(result)) {
+            resultObservable = Observable.fromPromise(result);
+          } else {
+            resultObservable = Observable.of(result);
+          }
+        }
+
+        return resultObservable.map((data_: any) => {
+          let data: any = data_;
+          if (typeof data === 'string') {
+            data = {
+              content: data
+            };
+          }
+          return { middleware: middleware.name, data, content: data.content };
+        });
+      };
+    }, this.outgoingMiddlewares);
+
+    const intialAcc = [];
+    return this.chain(intialAcc, middlewares)
+      .take(1)
+      .map((data: any) => ({ data, message }));
   }
 
   private startHttpServer(): void {

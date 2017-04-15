@@ -1,8 +1,9 @@
+import { Observable } from 'rxjs/Rx';
 import { IActivityStream } from '@broid/schemas';
 
 export type callbackType = (message: any, error?: any) => any;
-export type middlewareReceiveType = (bot: any, message: any) => Promise<any>;
-export type middlewareSendType = (bot: any, text: any, message: IActivityStream) => Promise<any>;
+export type middlewareIncomingType = (bot: any, message: any, acc?: any) => Promise<any> | Observable<any>;
+export type middlewareOutgoingType = (bot: any, content: string, message: IActivityStream, acc?: any) => Promise<any> | Observable<any>;
 
 export interface IHTTPOptions {
   host: string;
