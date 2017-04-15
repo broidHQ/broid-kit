@@ -2,7 +2,13 @@
   "name": "@broid/kit",
   "version": "0.0.1",
   "main": "lib/core/index.js",
-  "license": "AGPL-3.0+",
+  "license": "Apache-2.0",
+  "licenses": [
+    {
+      "type": "Apache-2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0"
+    }
+  ],
   "author": "Broid Team <opensource@broid.ai> (https://broid.ai)",
   "description": "Bot framework supported all messaging plateforms and middlewares.",
   "repository": {
@@ -39,8 +45,6 @@
     "watch": "concurrently --kill-others \"npm run lint:watch\" \"npm run tsc:watch\""
   },
   "devDependencies": {
-    "@types/bluebird": "^3.0.37",
-    "@types/bluebird-global": "^3.0.1",
     "@types/node": "^7.0.5",
     "@types/ramda": "0.0.3",
     "ava": "^0.18.1",
@@ -51,14 +55,15 @@
     "sinon": "^1.17.7",
     "tslint": "^4.3.1",
     "tslint-eslint-rules": "^4.0.0",
+    "tslint-microsoft-contrib": "^4.0.1",
     "typescript": "~2.2.2",
-    "watch": "^1.0.1",
-    "tslint-microsoft-contrib": "^4.0.1"
+    "watch": "^1.0.1"
   },
   "dependencies": {
     "@broid/schemas": "^1.0.0",
     "@broid/utils": "^1.1.0",
     "bluebird": "^3.5.0",
+    "body-parser": "^1.17.1",
     "express": "^4.15.2",
     "ramda": "^0.23.0",
     "rxjs": "^5.2.0"
