@@ -62,26 +62,22 @@ export class Bot {
     if (instance.listen) {
       this.logger.info({ method: 'use', message: `Integration: ${instance.serviceName()}` });
       this.addIntegration(instance);
-    } else if (instance.incoming || instance.outgoing) { // Middleware
-      if (instance.incoming) {
-        this.logger
-          .info({ method: 'use', message: `incoming middleware: ${instance.serviceName()}` });
-        this.incomingMiddlewares.push({
-          name: `${instance.serviceName()}.incoming`,
-          middleware: instance,
-          filter: filter || null,
-        });
-      }
-
-      if (instance.outgoing) {
-        this.logger
-          .info({ method: 'use', message: `outgoing middleware: ${instance.serviceName()}` });
-        this.outgoingMiddlewares.push({
-          name: `${instance.serviceName()}.outgoing`,
-          middleware: instance,
-          filter: filter || null,
-        });
-      }
+    } else if(instance.incoming) {
+      this.logger
+        .info({ method: 'use', message: `incoming middleware: ${instance.serviceName()}` });
+      this.incomingMiddlewares.push({
+        name: `${instance.serviceName()}.incoming`,
+        middleware: instance,
+        filter: filter || null,
+      });
+    } else if (instance.outgoing) { // Middleware
+      this.logger
+        .info({ method: 'use', message: `outgoing middleware: ${instance.serviceName()}` });
+      this.outgoingMiddlewares.push({
+        name: `${instance.serviceName()}.outgoing`,
+        middleware: instance,
+        filter: filter || null,
+      });
     }
     return;
   }
