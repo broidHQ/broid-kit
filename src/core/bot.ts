@@ -21,10 +21,10 @@ import {
   middlewareOutgoingType,
 } from './interfaces';
 
-const isObservable = (obs:any): boolean => obs && typeof obs.subscribe === 'function';
-const isPromise = (obj:any): boolean =>
-  obj && (typeof obj=='object')
-      && ('tap' in obj) && ('then' in obj) && (typeof obj.then == 'function');
+const isObservable = (obs: any): boolean => obs && typeof obs.subscribe === 'function';
+const isPromise = (obj: any): boolean =>
+  obj && (typeof obj === 'object')
+      && ('tap' in obj) && ('then' in obj) && (typeof obj.then === 'function');
 
 export class Bot {
   public httpEndpoints: string[];
@@ -62,21 +62,21 @@ export class Bot {
     if (instance.listen) {
       this.logger.info({ method: 'use', message: `Integration: ${instance.serviceName()}` });
       this.addIntegration(instance);
-    } else if(instance.incoming) {
+    } else if (instance.incoming) {
       this.logger
         .info({ method: 'use', message: `incoming middleware: ${instance.serviceName()}` });
       this.incomingMiddlewares.push({
-        name: `${instance.serviceName()}.incoming`,
-        middleware: instance,
         filter: filter || null,
+        middleware: instance,
+        name: `${instance.serviceName()}.incoming`,
       });
     } else if (instance.outgoing) { // Middleware
       this.logger
         .info({ method: 'use', message: `outgoing middleware: ${instance.serviceName()}` });
       this.outgoingMiddlewares.push({
-        name: `${instance.serviceName()}.outgoing`,
-        middleware: instance,
         filter: filter || null,
+        middleware: instance,
+        name: `${instance.serviceName()}.outgoing`,
       });
     }
     return;
@@ -151,7 +151,7 @@ export class Bot {
             type: 'Service',
           },
           'object': {
-            content: content,
+            content,
             type: 'Note',
           },
           'to': {
@@ -327,7 +327,7 @@ export class Bot {
    * @returns {Observable} The output after processing `input` through the chained filters.
    */
   private chain(input, filters) {
-    let seq = Observable.from(filters);
+    const seq = Observable.from(filters);
 
     return seq.reduce(
       (chain: any, filter: any, index: any) => {
@@ -338,7 +338,7 @@ export class Bot {
             });
         });
       },
-      Observable.of(input)
+      Observable.of(input),
     )
     .concatMap((value: any) => value);
   }
@@ -411,11 +411,11 @@ export class Bot {
           }
         }
 
-        return resultObservable.map((data_: any) => {
-          let data: any = data_;
+        return resultObservable.map((d: any) => {
+          let data: any = d;
           if (typeof data === 'string') {
             data = {
-              content: data
+              content: data,
             };
           }
           return { middleware: middleware.name, data, content: data.content };
