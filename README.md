@@ -108,13 +108,13 @@ bot.hears(["keyword", "hello.*"], "Group")
 ## Node callback is supported
 
 ```javascript
-bot.hear("hello.*", "Group", (message, error) => {
+bot.hear("hello.*", "Group", (data, error) => {
   console.log("Data:", JSON.stringify(data, null, 2));
 });
 ```
 
 ```javascript
-bot.hears(["keyword", "hello.*"], "Group", (message, error) => {
+bot.hears(["keyword", "hello.*"], "Group", (data, error) => {
   console.log("Data:", JSON.stringify(data, null, 2));
 });
 ```
@@ -124,17 +124,17 @@ bot.hears(["keyword", "hello.*"], "Group", (message, error) => {
 ### A simple message
 
 ```javascript
-bot.sendText("Hello world.", data.raw);
+bot.sendText("Hello world.", data.message);
 ```
 
 ### A Video or Image message
 
 ```javascript
-bot.sendImage("http://url-of-media", data.raw, optionalMeta);
+bot.sendImage("http://url-of-media", data.message, optionalMeta);
 
 // OR
 
-bot.sendVideo("http://url-of-media", data.raw, optionalMeta);
+bot.sendVideo("http://url-of-media", data.message, optionalMeta);
 ```
 
 `optionalMeta` is an object of optional information for the media.
@@ -161,11 +161,14 @@ class FakeMiddleware {
     return "FakeMiddleware";
   }
 
-  receive(bot, message) {
+  incoming(bot, message) {
+    // the return value can be an Promise<object>, Observable<object> or null
     return "hello world";
   }
 
-  send(bot, message) {
+  outgoing(bot, message) {
+    // the return value can be an Promise<object>, Observable<object> or null
+    // The object.content field will be use to update the text of the message sent.
     return "Good buy world";
   }
 }
