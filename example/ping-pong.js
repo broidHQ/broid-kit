@@ -16,4 +16,4 @@ bot.use(new BroidSkype({
 }));
 
 bot.hear('ping.*', 'Person')
-  .subscribe((message) => bot.sendText("pong", message.raw));
+  .subscribe((data) => bot.sendText("pong", data.message));

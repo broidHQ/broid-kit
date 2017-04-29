@@ -72,7 +72,7 @@ bot.use(new Broid-Messenger(<...options>));
       console.log("Data:", JSON.stringify(data, null, 2));
 
       // Reply to the message
-      bot.sendText("Hi, How are you?", data.raw);
+      bot.sendText("Hi, How are you?", data.message);
     });
   ```
 
@@ -92,7 +92,7 @@ In case of `@broid/skype` the webhook route will be `/webhook/skype`.
       console.log("Data:", JSON.stringify(data, null, 2));
 
       // Reply to the message
-      bot.sendText("i am listening all messages", data.raw);
+      bot.sendText("i am listening all messages", data.message);
     });
   ```
 
