@@ -162,6 +162,7 @@ export class Bot {
         };
 
         data = this.addMessageContext(data, message);
+
         return this.send(data);
       });
   }
@@ -189,7 +190,8 @@ export class Bot {
   private messageTypes2Arr(messageTypes?: string | null): string[] {
     let messageTypesArr: string[] = [];
     if (messageTypes) {
-      messageTypesArr = R.map((m) => R.toLower(m), R.split(',', messageTypes));
+      messageTypesArr = R.map((m) =>
+        R.toLower(m.replace(/^\s+|\s+$/g, '')), R.split(',', messageTypes));
     }
     return messageTypesArr;
   }
