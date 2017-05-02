@@ -115,11 +115,11 @@ export class Bot {
     const patternRegexes: RegExp[] = R.map((pattern: string) =>
       new RegExp(pattern, 'ig'), patterns);
 
-    const listener: Observable<IActivityStream> = Observable.merge(...R.map((integration: any) =>
-      integration.listen(), this.integrations))
-        .mergeMap((message: IActivityStream) => {
-          const messageUpdated: any = this.processIncomingMessage(message);
-
+    const listener: Observable<IActivityStream> = Observable
+        .merge(...R.flatten(R.map((integration: any) =>
+          [integration.connect(), integration.listen()], this.integrations)))
+        .mergeMap((message: IActivityStream) => this.processIncomingMessage(message))
+        .mergeMap((messageUpdated: any) => {
           const matches = R.pipe(R.map((patternRegex: RegExp) =>
             this.testIncoming(messageUpdated.message, patternRegex, messageTypesArr)),
             R.reject(R.equals(false)));
