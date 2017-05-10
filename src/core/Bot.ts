@@ -278,11 +278,13 @@ export class Bot {
     return Promise.reject('Message should follow broid-schemas.');
   }
 
-  private sendMedia(url: string, mediaType: string,
+  private sendMedia(url_: string, mediaType: string,
                     message: IActivityStream,
                     meta?: IMetaMediaSend): Promise<any> {
-    return this.processOutgoingContent(url, message)
+    return this.processOutgoingContent(url_, message)
       .then((urlUpdated) => {
+        const url: string = urlUpdated.url || url_;
+
         let data: ISendParameters = {
           '@context': 'https://www.w3.org/ns/activitystreams',
           'generator': {
@@ -292,9 +294,9 @@ export class Bot {
           },
           'object': {
             content: R.prop('content', meta),
-            title: R.prop('title', meta),
+            name: R.prop('name', meta),
             type: mediaType,
-            url: urlUpdated,
+            url: url,
           },
           'to': {
             id: R.path(['target', 'id'], message),
@@ -304,6 +306,7 @@ export class Bot {
         };
 
         data = this.addMessageContext(data, message);
+
         return this.send(data);
       });
   }
