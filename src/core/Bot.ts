@@ -5,7 +5,6 @@ import {
 import { Logger } from '@broid/utils';
 
 import * as Promise from 'bluebird';
-import * as bodyParser from 'body-parser';
 import * as express from 'express';
 import * as http from 'http';
 import * as R from 'ramda';
@@ -29,8 +28,8 @@ const isPromise = (obj: any): boolean =>
 export class Bot {
   public httpEndpoints: string[];
   public httpServer: null | http.Server;
+  public express: any;
 
-  private express: any;
   private httpOptions: IHTTPOptions;
   private integrations: any;
   private logLevel: string;
@@ -55,6 +54,13 @@ export class Bot {
 
   public getHTTPEndpoints(): string[] {
     return this.httpEndpoints;
+  }
+
+  public getExpress(): any {
+    if (!this.express) {
+      this.express = express();
+    }
+    return this.express;
   }
 
   public use(instance: any, filter?: string | string[]): void {
@@ -272,11 +278,13 @@ export class Bot {
     return Promise.reject('Message should follow broid-schemas.');
   }
 
-  private sendMedia(url: string, mediaType: string,
+  private sendMedia(url_: string, mediaType: string,
                     message: IActivityStream,
                     meta?: IMetaMediaSend): Promise<any> {
-    return this.processOutgoingContent(url, message)
+    return this.processOutgoingContent(url_, message)
       .then((urlUpdated) => {
+        const url: string = urlUpdated.url || url_;
+
         let data: ISendParameters = {
           '@context': 'https://www.w3.org/ns/activitystreams',
           'generator': {
@@ -286,9 +294,9 @@ export class Bot {
           },
           'object': {
             content: R.prop('content', meta),
-            title: R.prop('title', meta),
+            name: R.prop('name', meta),
             type: mediaType,
-            url: urlUpdated,
+            url: url,
           },
           'to': {
             id: R.path(['target', 'id'], message),
@@ -298,6 +306,7 @@ export class Bot {
         };
 
         data = this.addMessageContext(data, message);
+
         return this.send(data);
       });
   }
@@ -307,15 +316,9 @@ export class Bot {
 
     const router = integration.getRouter();
     if (router) {
-      if (!this.express) {
-        this.express = express();
-        this.express.use(bodyParser.json());
-        this.express.use(bodyParser.urlencoded({ extended: false }));
-      }
-
       const httpPath = `/webhook/${integration.serviceName()}`;
       this.httpEndpoints.push(httpPath);
-      this.express.use(httpPath, router);
+      this.getExpress().use(httpPath, router);
     }
 
     return;
@@ -432,8 +435,8 @@ export class Bot {
   }
 
   private startHttpServer(): void {
-    if (this.express && !this.httpServer) {
-      this.httpServer = this.express.listen(this.httpOptions.port, this.httpOptions.host,
+    if (!this.httpServer) {
+      this.httpServer = this.getExpress().listen(this.httpOptions.port, this.httpOptions.host,
         () => {
           this.logger
             .info(`Server listening on port ${this.httpOptions.host}:${this.httpOptions.port}...`);
