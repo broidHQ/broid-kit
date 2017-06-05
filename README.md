@@ -78,6 +78,40 @@ bot.hear("hello.*", "Group")
   });
 ```
 
+Broid-Kit can also be used with your existing Express setup.
+
+```javascript
+
+const Bot = require("@broid/kit");
+const BroidDiscord = require("@broid/discord");
+const BroidMessenger = require("@broid/messenger");
+const BroidSlack = require("@broid/slack");
+const express = require("express");
+
+const bot = new Bot({
+  logLevel: "info"
+});
+
+bot.use(new BroidDiscord({...options}));
+bot.use(new BroidMessenger({...options}));
+bot.use(new BroidSlack({...options}));
+
+// Setup express
+const app = express();
+app.use("/", bot.getRouter());
+app.listen(8080);
+
+// Listening for public starting by regex match for `hello`
+bot.hear("hello.*", "Group")
+  .subscribe((data) => {
+    console.log("Data:", JSON.stringify(data, null, 2));
+
+    // Reply to the message
+    bot.sendText("Hi, How are you?", data.message);
+  });
+```
+
+
 ## Documentation
 
 ### Receive all group messages
