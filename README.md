@@ -208,4 +208,8 @@ Broid Kit provide an http server and creates a default webhook route when the in
 
 In case of `@broid/skype` the webhook route will be `/webhook/skype`.
 
+## Contribute
+
+See [CONTRIBUTE.md](CONTRIBUTE.md).
+
 ## [License](LICENSE)
