@@ -161,6 +161,7 @@ export class Bot {
           },
           'object': {
             content,
+            id: R.path(['object', 'id'], message),
             type: 'Note',
           },
           'to': {
