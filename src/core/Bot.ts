@@ -28,10 +28,9 @@ const isPromise = (obj: any): boolean =>
 
 export class Bot {
   public httpEndpoints: string[];
-  public httpServer: null | http.Server;
+  public httpServer: http.Server | null;
 
-  private express: any;
-  private httpOptions: IHTTPOptions;
+  private router: express.Router;
   private integrations: any;
   private logLevel: string;
   private logger: Logger;
@@ -45,16 +44,26 @@ export class Bot {
     this.incomingMiddlewares = [];
     this.outgoingMiddlewares = [];
 
-    const httpOptions: IHTTPOptions = { host: '0.0.0.0', port: 8080 };
-    this.httpOptions = obj && obj.http || httpOptions;
+    this.router = express.Router();
     this.httpEndpoints = [];
     this.httpServer = null;
+    if (obj && obj.http) {
+      this.startHttpServer(obj.http);
+    }
 
     this.logger = new Logger('broidkit', this.logLevel);
   }
 
   public getHTTPEndpoints(): string[] {
     return this.httpEndpoints;
+  }
+
+  public getRouter(): express.Router | null {
+    if (this.httpServer) {
+      return null;
+    }
+
+    return this.router;
   }
 
   public use(instance: any, filter?: string | string[]): void {
@@ -152,6 +161,7 @@ export class Bot {
           },
           'object': {
             content,
+            id: R.path(['object', 'id'], message),
             type: 'Note',
           },
           'to': {
@@ -211,10 +221,6 @@ export class Bot {
 
   private processListener(listener: Observable<IActivityStream>,
                           callback?: callbackType): Observable<IActivityStream> | boolean {
-
-    // Start the http server
-    this.startHttpServer();
-
     if (callback) {
       listener.subscribe(callback, (error) => callback(null, error));
       return true;
@@ -304,18 +310,15 @@ export class Bot {
 
   private addIntegration(integration: any): void {
     this.integrations.push(integration);
+    if (!integration.getRouter) {
+      return;
+    }
 
     const router = integration.getRouter();
     if (router) {
-      if (!this.express) {
-        this.express = express();
-        this.express.use(bodyParser.json());
-        this.express.use(bodyParser.urlencoded({ extended: false }));
-      }
-
       const httpPath = `/webhook/${integration.serviceName()}`;
       this.httpEndpoints.push(httpPath);
-      this.express.use(httpPath, router);
+      this.router.use(httpPath, router);
     }
 
     return;
@@ -431,13 +434,16 @@ export class Bot {
       .map((data: any) => ({ data, message }));
   }
 
-  private startHttpServer(): void {
-    if (this.express && !this.httpServer) {
-      this.httpServer = this.express.listen(this.httpOptions.port, this.httpOptions.host,
-        () => {
-          this.logger
-            .info(`Server listening on port ${this.httpOptions.host}:${this.httpOptions.port}...`);
-        });
+  private startHttpServer(httpOptions: IHTTPOptions): void {
+    if (!this.httpServer) {
+      const app: express = express();
+      app.use(bodyParser.json());
+      app.use(bodyParser.urlencoded({ extended: false }));
+      app.use(this.router);
+
+      this.httpServer = app.listen(httpOptions.port, httpOptions.host, () => {
+        this.logger.info(`Server listening on port ${httpOptions.host}:${httpOptions.port}...`);
+      });
     }
   }
 
