@@ -280,9 +280,10 @@ export class Bot {
 
   private sendMedia(url: string, mediaType: string,
                     message: IActivityStream,
-                    meta?: IMetaMediaSend): Promise<any> {
+                    meta: IMetaMediaSend = {}): Promise<any> {
     return this.processOutgoingContent(url, message)
-      .then((urlUpdated) => {
+      .then((updated: any) => {
+        const urlUpdated: string = updated.content || url;
         let data: ISendParameters = {
           '@context': 'https://www.w3.org/ns/activitystreams',
           'generator': {
@@ -291,8 +292,10 @@ export class Bot {
             type: 'Service',
           },
           'object': {
-            content: R.prop('content', meta),
-            title: R.prop('title', meta),
+            content: R.prop('content', meta) || '',
+            id: R.path(['object', 'id'], message),
+            name: R.prop('name', meta) || '',
+            title: R.prop('title', meta) || '',
             type: mediaType,
             url: urlUpdated,
           },
