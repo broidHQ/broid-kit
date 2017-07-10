@@ -30,7 +30,7 @@
 
 # Broid Kit
 
-Broid Kit aims to ease the creation of bots communicating through messaging platforms.Broid Kit is powered by [Broid Integrations](https://github.com/broidHQ/integrations/edit/master/README.md) which allows you to leverage the largest collection of messaging channels integrated in a given framework.
+Broid Kit aims to ease the creation of bots communicating through messaging platforms. Broid Kit is powered by [Broid Integrations](https://github.com/broidHQ/integrations/edit/master/README.md) which allows you to leverage the largest collection of messaging channels integrated in a given framework.
 
 > Connect your App to Multiple Messaging Channels with the W3C Open standards.
 
@@ -45,7 +45,9 @@ Broid Kit aims to ease the creation of bots communicating through messaging plat
 
 [![gitter][gitter]][gitter-url] [![join-slack][join-slack]][join-slack-url]
 
-# Quick Example
+## Quick Example
+
+_Note:_ Options for the integration examples can be found on the [Discord](https://github.com/broidHQ/integrations/tree/master/broid-discord), [Messenger](https://github.com/broidHQ/integrations/tree/master/broid-messenger), and [Slack](https://github.com/broidHQ/integrations/tree/master/broid-slack) documentation respectively.
 
 ```javascript
 
@@ -62,50 +64,106 @@ const bot = new Bot({
   }
 });
 
-bot.use(new Broid-Slack(<...options>));
-bot.use(new Broid-Discord(<...options>));
-bot.use(new Broid-Messenger(<...options>));
+bot.use(new BroidDiscord({...options}));
+bot.use(new BroidMessenger({...options}));
+bot.use(new BroidSlack({...options}));
 
-// Listening for public starting by `hello`
-  bot.hear("hello.*", "Group")
-    .subscribe((data) => {
-      console.log("Data:", JSON.stringify(data, null, 2));
+// Listening for public starting by regex match for `hello`
+bot.hear("hello.*", "Group")
+  .subscribe((data) => {
+    console.log("Data:", JSON.stringify(data, null, 2));
 
-      // Reply to the message
-      bot.sendText("Hi, How are you?", data.message);
-    });
-  ```
+    // Reply to the message
+    bot.sendText("Hi, How are you?", data.message);
+  });
+```
 
-# Documentation
+Broid-Kit can also be used with your existing Express setup.
 
-## WebHooks
+```javascript
 
-Broid Kit provide an http server and creates a default webhook route when the integration requires it. By default, the webhook path follows the naming convention: `webhook/<integration>`, integration is the name provide by the `getServiceName` method.
+const Bot = require("@broid/kit");
+const BroidDiscord = require("@broid/discord");
+const BroidMessenger = require("@broid/messenger");
+const BroidSlack = require("@broid/slack");
+const express = require("express");
 
-In case of `@broid/skype` the webhook route will be `/webhook/skype`.
+const bot = new Bot({
+  logLevel: "info"
+});
 
-## Receiving all messages
+bot.use(new BroidDiscord({...options}));
+bot.use(new BroidMessenger({...options}));
+bot.use(new BroidSlack({...options}));
 
-  ```javascript
-  bot.on("Group")
-    .subscribe((data) => {
-      console.log("Data:", JSON.stringify(data, null, 2));
+// Setup express
+const app = express();
+app.use("/", bot.getRouter());
+app.listen(8080);
 
-      // Reply to the message
-      bot.sendText("i am listening all messages", data.message);
-    });
-  ```
+// Listening for public starting by regex match for `hello`
+bot.hear("hello.*", "Group")
+  .subscribe((data) => {
+    console.log("Data:", JSON.stringify(data, null, 2));
 
-## Matching Patterns and Keywords
+    // Reply to the message
+    bot.sendText("Hi, How are you?", data.message);
+  });
+```
 
-  ```javascript
+
+## Documentation
+
+### Receive all group messages
+
+```javascript
+bot.on("Group")
+  .subscribe((data) => {
+    console.log("Data:", JSON.stringify(data, null, 2));
+
+    // Reply to the message
+    bot.sendText("i am listening all messages", data.message);
+  });
+```
+
+### Receive all private messages
+
+```javascript
+bot.on("Person")
+  .subscribe((data) => {
+    console.log("Data:", JSON.stringify(data, null, 2));
+
+    // Reply to the message
+    bot.sendText("i am listening all messages", data.message);
+  });
+```
+
+### Receive all
+
+Because Broid Kit is built with [Observables](https://github.com/ReactiveX/RxJS), you can subscribe to multiple sources.
+
+```javascript
+const Observable = require("rxjs").Observable;
+
+Observable.merge(bot.on("Group"), bot.on("Person"))
+  .subscribe((data) => {
+    console.log("Data:", JSON.stringify(data, null, 2));
+
+    // Reply to the message
+    bot.sendText("i am listening all messages", data.message);
+  });
+```
+
+### Matching patterns and keywords
+
+```javascript
 bot.hears(["keyword", "hello.*"], "Group")
   .subscribe(data => {
     console.log("Data:", JSON.stringify(data, null, 2));
   });
 ```
 
-## Node callback is supported
+### Node callback is supported
 
 ```javascript
 bot.hear("hello.*", "Group", (data, error) => {
@@ -119,15 +177,13 @@ bot.hears(["keyword", "hello.*"], "Group", (data, error) => {
 });
 ```
 
-## Send
-
-### A simple message
+### Send a simple message
 
 ```javascript
 bot.sendText("Hello world.", data.message);
 ```
 
-### A Video or Image message
+### Send a video or image message
 
 ```javascript
 bot.sendImage("http://url-of-media", data.message, optionalMeta);
@@ -149,27 +205,27 @@ It should like:
 
 ## Middleware
 
-Broid kit support middleware to allow you to preprocess received or sent messages.
+Broid kit supports middleware to allow you to preprocess received or sent messages.
 
 Example of Middleware preprocessing
 
 ```javascript
-class FakeMiddleware {
+class MyMiddleware {
   constructor() {}
 
   serviceName() {
-    return "FakeMiddleware";
+    return "MyMiddleware";
   }
 
   incoming(bot, message) {
     // the return value can be an Promise<object>, Observable<object> or null
-    return "hello world";
+    return "Hello world!";
   }
 
   outgoing(bot, message) {
     // the return value can be an Promise<object>, Observable<object> or null
     // The object.content field will be use to update the text of the message sent.
-    return "Good buy world";
+    return "Good bye world!";
   }
 }
 ```
@@ -177,5 +233,17 @@ class FakeMiddleware {
 This middleware can be used like so:
 
 ```javascript
-bot.use(new FakeMiddleware());
+bot.use(new MyMiddleware());
 ```
+
+## WebHooks
+
+Broid Kit provide an http server and creates a default webhook route when the integration requires it. By default, the webhook path follows the naming convention: `webhook/<integration>`, integration is the name provide by the `getServiceName` method.
+
+In case of `@broid/skype` the webhook route will be `/webhook/skype`.
+
+## Contribute
+
+See [CONTRIBUTE.md](CONTRIBUTE.md).
+
+## [License](LICENSE)
