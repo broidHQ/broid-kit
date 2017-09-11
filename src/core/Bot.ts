@@ -31,7 +31,7 @@ export class Bot {
   public httpServer: http.Server | null;
 
   private router: express.Router;
-  private integrations: any;
+  public integrations: any;
   private logLevel: string;
   private logger: Logger;
   private outgoingMiddlewares: any;
@@ -94,7 +94,7 @@ export class Bot {
   // messageTypes => Image, Video, Group, Private, Mention etc...
   public hear(pattern: string | boolean,
               messageTypes?: string | callbackType,
-              cb?: callbackType): Observable<IActivityStream> | boolean  {
+              cb?: callbackType): Observable<IActivityStream>  {
     const args: IListenerArgs = this.processArgs(messageTypes, cb);
     const messageTypesArr: string[] = this.messageTypes2Arr(R.prop('msgTypes', args) as string);
 
@@ -118,7 +118,7 @@ export class Bot {
 
   public hears(patterns: string[],
                messageTypes?: string | callbackType,
-               cb?: callbackType): Observable<IActivityStream> | boolean  {
+               cb?: callbackType): Observable<IActivityStream>  {
     const args: IListenerArgs = this.processArgs(messageTypes, cb);
     const messageTypesArr: string[] = this.messageTypes2Arr(R.prop('msgTypes', args) as string);
     const patternRegexes: RegExp[] = R.map((pattern: string) =>
@@ -144,7 +144,7 @@ export class Bot {
   }
 
   public on(messageTypes?: string | callbackType,
-            cb?: callbackType): Observable<IActivityStream> | boolean  {
+            cb?: callbackType): Observable<IActivityStream>  {
     return this.hear(true, messageTypes, cb);
   }
 
@@ -220,10 +220,9 @@ export class Bot {
   }
 
   private processListener(listener: Observable<IActivityStream>,
-                          callback?: callbackType): Observable<IActivityStream> | boolean {
+                          callback?: callbackType): Observable<IActivityStream> {
     if (callback) {
       listener.subscribe(callback, (error) => callback(null, error));
-      return true;
     }
     return listener;
   }
