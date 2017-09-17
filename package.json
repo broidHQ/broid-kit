@@ -1,6 +1,6 @@
 {
   "name": "@broid/kit",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "main": "lib/core/index.js",
   "license": "Apache-2.0",
   "licenses": [
@@ -31,6 +31,7 @@
   "engines": {
     "node": ">=6.0.0"
   },
+  "types": "./lib/core/index.d.ts",
   "scripts": {
     "build": "npm run clean && npm run copy && tsc",
     "clean": "rm -rf lib",
