@@ -8,7 +8,7 @@ export declare class Bot {
     httpEndpoints: string[];
     httpServer: http.Server | null;
     private router;
-    private integrations;
+    integrations: any;
     private logLevel;
     private logger;
     private outgoingMiddlewares;
@@ -17,9 +17,9 @@ export declare class Bot {
     getHTTPEndpoints(): string[];
     getRouter(): express.Router | null;
     use(instance: any, filter?: string | string[]): void;
-    hear(pattern: string | boolean, messageTypes?: string | callbackType, cb?: callbackType): Observable<IActivityStream> | boolean;
-    hears(patterns: string[], messageTypes?: string | callbackType, cb?: callbackType): Observable<IActivityStream> | boolean;
-    on(messageTypes?: string | callbackType, cb?: callbackType): Observable<IActivityStream> | boolean;
+    hear(pattern: string | boolean, messageTypes?: string | callbackType, cb?: callbackType): Observable<IActivityStream>;
+    hears(patterns: string[], messageTypes?: string | callbackType, cb?: callbackType): Observable<IActivityStream>;
+    on(messageTypes?: string | callbackType, cb?: callbackType): Observable<IActivityStream>;
     sendText(text: string, message: IActivityStream): any;
     sendVideo(url: string, message: IActivityStream, meta?: IMetaMediaSend): any;
     sendImage(url: string, message: IActivityStream, meta?: IMetaMediaSend): any;

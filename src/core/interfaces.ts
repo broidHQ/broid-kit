@@ -25,6 +25,6 @@ export interface IMetaMediaSend {
 }
 
 export interface IOptions {
-  logLevel: string;
+  logLevel?: string;
   http?: IHTTPOptions;
 }
