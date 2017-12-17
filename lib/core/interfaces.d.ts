@@ -19,3 +19,7 @@ export interface IOptions {
     logLevel?: string;
     http?: IHTTPOptions;
 }
+export interface IMessage {
+    data: any;
+    message: IActivityStream;
+}
