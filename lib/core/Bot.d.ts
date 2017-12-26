@@ -3,7 +3,7 @@ import { IActivityStream } from '@broid/schemas';
 import * as express from 'express';
 import * as http from 'http';
 import { Observable } from 'rxjs/Rx';
-import { callbackType, IMetaMediaSend, IOptions } from './interfaces';
+import { callbackType, IMetaMediaSend, IOptions, IMessage } from './interfaces';
 export declare class Bot {
     httpEndpoints: string[];
     httpServer: http.Server | null;
@@ -17,9 +17,9 @@ export declare class Bot {
     getHTTPEndpoints(): string[];
     getRouter(): express.Router | null;
     use(instance: any, filter?: string | string[]): void;
-    hear(pattern: string | boolean, messageTypes?: string | callbackType, cb?: callbackType): Observable<IActivityStream>;
+    hear(pattern: string | boolean, messageTypes?: string | callbackType, cb?: callbackType): Observable<IMessage>;
     hears(patterns: string[], messageTypes?: string | callbackType, cb?: callbackType): Observable<IActivityStream>;
-    on(messageTypes?: string | callbackType, cb?: callbackType): Observable<IActivityStream>;
+    on(messageTypes?: string | callbackType, cb?: callbackType): Observable<IMessage>;
     sendText(text: string, message: IActivityStream): any;
     sendVideo(url: string, message: IActivityStream, meta?: IMetaMediaSend): any;
     sendImage(url: string, message: IActivityStream, meta?: IMetaMediaSend): any;

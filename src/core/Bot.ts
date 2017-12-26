@@ -17,6 +17,7 @@ import {
   IListenerArgs,
   IMetaMediaSend,
   IOptions,
+  IMessage,
   middlewareIncomingType,
   middlewareOutgoingType,
 } from './interfaces';
@@ -94,7 +95,7 @@ export class Bot {
   // messageTypes => Image, Video, Group, Private, Mention etc...
   public hear(pattern: string | boolean,
               messageTypes?: string | callbackType,
-              cb?: callbackType): Observable<IActivityStream>  {
+              cb?: callbackType): Observable<IMessage>  {
     const args: IListenerArgs = this.processArgs(messageTypes, cb);
     const messageTypesArr: string[] = this.messageTypes2Arr(R.prop('msgTypes', args) as string);
 
@@ -144,7 +145,7 @@ export class Bot {
   }
 
   public on(messageTypes?: string | callbackType,
-            cb?: callbackType): Observable<IActivityStream>  {
+            cb?: callbackType): Observable<IMessage>  {
     return this.hear(true, messageTypes, cb);
   }
 
@@ -350,7 +351,7 @@ export class Bot {
     .concatMap((value: any) => value);
   }
 
-  private processIncomingMessage(message: IActivityStream): Observable<any> {
+  private processIncomingMessage(message: IActivityStream): Observable<IMessage> {
     const middlewares = R.map((middleware: any) => {
       return (acc: any) => {
         let resultObservable = Observable.empty();
