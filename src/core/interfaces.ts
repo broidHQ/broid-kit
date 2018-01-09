@@ -1,4 +1,4 @@
-import { IActivityStream } from '@broid/schemas';
+import { IActivityStream, IASContext } from '@broid/schemas';
 
 import { Observable } from 'rxjs/Rx';
 
@@ -32,4 +32,19 @@ export interface IOptions {
 export interface IMessage {
   data: any;
   message: IActivityStream;
+}
+
+export interface ISendData {
+  generator: {
+    id: string;
+    name: string;
+  };
+  target: {
+    id: string;
+    type: string;
+  };
+  object?: {
+    id: string;
+    context: IASContext;
+  };
 }

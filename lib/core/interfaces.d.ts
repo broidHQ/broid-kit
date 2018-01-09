@@ -1,4 +1,4 @@
-import { IActivityStream } from '@broid/schemas';
+import { IActivityStream, IASContext } from '@broid/schemas';
 import { Observable } from 'rxjs/Rx';
 export declare type callbackType = (message: any, error?: any) => any;
 export declare type middlewareIncomingType = (bot: any, message: any, acc?: any) => Promise<any> | Observable<any>;
@@ -22,4 +22,18 @@ export interface IOptions {
 export interface IMessage {
     data: any;
     message: IActivityStream;
+}
+export interface ISendData {
+    generator: {
+        id: string;
+        name: string;
+    };
+    target: {
+        id: string;
+        type: string;
+    };
+    object?: {
+        id: string;
+        context: IASContext;
+    };
 }
