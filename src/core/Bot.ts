@@ -15,9 +15,10 @@ import {
   callbackType,
   IHTTPOptions,
   IListenerArgs,
+  IMessage,
   IMetaMediaSend,
   IOptions,
-  IMessage,
+  ISendData,
   middlewareIncomingType,
   middlewareOutgoingType,
 } from './interfaces';
@@ -149,7 +150,7 @@ export class Bot {
     return this.hear(true, messageTypes, cb);
   }
 
-  public sendText(text: string, message: IActivityStream) {
+  public sendText(text: string, message: ISendData) {
     return this.processOutgoingContent(text, message)
       .then((updated) => {
         const content: string = updated.content || text;
@@ -178,11 +179,11 @@ export class Bot {
       });
   }
 
-  public sendVideo(url: string, message: IActivityStream, meta?: IMetaMediaSend) {
+  public sendVideo(url: string, message: ISendData, meta?: IMetaMediaSend) {
     return this.sendMedia(url, 'Video', message, meta);
   }
 
-  public sendImage(url: string, message: IActivityStream, meta?: IMetaMediaSend) {
+  public sendImage(url: string, message: ISendData, meta?: IMetaMediaSend) {
     return this.sendMedia(url, 'Image', message, meta);
   }
 
@@ -279,7 +280,7 @@ export class Bot {
   }
 
   private sendMedia(url: string, mediaType: string,
-                    message: IActivityStream,
+                    message: ISendData,
                     meta: IMetaMediaSend = {}): Promise<any> {
     return this.processOutgoingContent(url, message)
       .then((updated: any) => {
