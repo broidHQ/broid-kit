@@ -16,6 +16,7 @@ export declare class Bot {
     constructor(obj?: IOptions);
     getHTTPEndpoints(): string[];
     getRouter(): express.Router | null;
+    getIntegration(name: string): any | null;
     use(instance: any, filter?: string | string[]): void;
     hear(pattern: string | boolean, messageTypes?: string | callbackType, cb?: callbackType): Observable<IMessage>;
     hears(patterns: string[], messageTypes?: string | callbackType, cb?: callbackType): Observable<IActivityStream>;

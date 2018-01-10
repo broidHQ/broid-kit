@@ -67,6 +67,17 @@ export class Bot {
     return this.router;
   }
 
+  public getIntegration(name: string): any | null {
+    const integrationFind = R.filter((integration: any) =>
+        integration.serviceName() === name, this.integrations);
+
+    if (!R.isEmpty(integrationFind)) {
+      return integrationFind[0];
+    }
+
+    return null;
+  }
+
   public use(instance: any, filter?: string | string[]): void {
     // it's an integration
     if (instance.listen) {
